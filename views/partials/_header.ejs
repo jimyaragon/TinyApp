@@ -23,7 +23,10 @@
           <input type="text" class="form-control" name="username" placeholder="Username">
         </div>
         <button class="btn btn-outline-light" type="submit">Login</button>
-      </form>  
+      </form>
+      <% if (username) { %>
+        <span class="navbar-text ml-3">Welcome, <%= username %></span>
+      <% } %>  
   
     </nav>
   </header>
