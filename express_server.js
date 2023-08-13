@@ -115,4 +115,14 @@ app.get("/urls.json", (req, res) => {
       res.status(400).send("Invalid username");
     }
   });
+
+  app.post("/logout", (req, res) => {
+    // Clear the username cookie
+    res.clearCookie("username");
+  
+  
+    // Redirect back to the /urls page
+    res.redirect("/urls");
+  });
+  
   
