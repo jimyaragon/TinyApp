@@ -37,7 +37,7 @@ app.get("/urls.json", (req, res) => {
   });
   
   app.get("/urls/:id", (req, res) => {
-    const templateVars = { id: req.params.id, longURL: "http://www.lighthouselabs.ca"};
+    const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id]};
     res.render("urls_show", templateVars);
   });
 
@@ -72,6 +72,18 @@ app.get("/urls.json", (req, res) => {
   
     if (urlDatabase[idToDelete]) {
       delete urlDatabase[idToDelete];
+      res.redirect("/urls");
+    } else {
+      res.status(404).send("Short URL not found");
+    }
+  });
+
+  app.post("/urls/:id", (req, res) => {
+    const idToUpdate = req.params.id;
+    const newLongURL = req.body.longURL;
+  
+    if (urlDatabase[idToUpdate]) {
+      urlDatabase[idToUpdate] = newLongURL;
       res.redirect("/urls");
     } else {
       res.status(404).send("Short URL not found");
