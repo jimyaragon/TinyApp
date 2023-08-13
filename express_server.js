@@ -66,3 +66,14 @@ app.get("/urls.json", (req, res) => {
       res.status(404).send("Short URL not found");
     }
   });
+
+  app.post("/urls/:id/delete", (req, res) => {
+    const idToDelete = req.params.id;
+  
+    if (urlDatabase[idToDelete]) {
+      delete urlDatabase[idToDelete];
+      res.redirect("/urls");
+    } else {
+      res.status(404).send("Short URL not found");
+    }
+  });
