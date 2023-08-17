@@ -124,5 +124,14 @@ app.get("/urls.json", (req, res) => {
     // Redirect back to the /urls page
     res.redirect("/urls");
   });
+
+  app.get("/register", (req, res) => {
+    res.render("register");
+  });
   
+  app.post("/register", (req, res) => {
+    
+    // Example response:
+    res.send("Registration successful!");
+  });
   
