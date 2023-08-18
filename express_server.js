@@ -62,6 +62,13 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+app.get("/urls_login", (req, res) => {
+  const templateVars = {
+    user: null // or set to a default value
+  };
+  res.render("urls_login", templateVars);
+});
+
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -75,11 +82,11 @@ app.get("/urls.json", (req, res) => {
 });
 
 
-app.get("/url_register", (req, res) => {
+app.get("/urls_register", (req, res) => {
   const templateVars = {
-    user: null, // or set to a default value
+    user: null // or set to a default value
   };
-  res.render("url_register", templateVars);
+  res.render("urls_register", templateVars);
 });
 
 app.post("/register", (req, res) => {
@@ -87,13 +94,12 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
 
   if (!email || !password) {
-    res.status(400).send("Email and password are required. Try again!");
+    res.status(400).send("Please add Email and password");
     return;
   }
 
-
   if (getUserByEmail(email)) {
-    res.status(400).send("Email is already registered.");
+    res.status(400).send("This email address is already in the system");
     return;
   }
 
@@ -138,6 +144,8 @@ app.post("/urls/:id", (req, res) => {
     res.status(404).send("Short URL not found");
   }
 });
+
+
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
@@ -187,4 +195,5 @@ function generateRandomString() {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
   

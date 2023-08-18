@@ -20,6 +20,7 @@
         </div>
       </div>
   
+  
       <% if (user) { %>
         <h4 class="navbar-text">
           <span class="navbar-text ml-3">Welcome, <%= user.email %></span>
@@ -28,11 +29,13 @@
           <button type="submit" class="btn btn-danger">Log Out</button>
         </form>
       <% } else { %>
-        <form action="/login" class="form-inline" method="POST">
-          <input type="text" name="username" id="" placeholder="Username" class="form-control mx-lg-3">
-          <button type="submit" class="btn btn-outline-light">Login</button>
-        </form>
-      <% } %>
+       
+           <div class="navbar-nav"></div>
+            <button type="button" class="btn btn-light mr-3 btn-sm btn-link"><a  href="/urls_register">Register</a></button>
+            <button type="button" class="btn btn-light btn-sm"><a href="/urls_login">Login</a></button>
+         </div>
   
-      </nav>
+        <% } %>
+  
+        </nav>
   </header>
