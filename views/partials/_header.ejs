@@ -1,4 +1,4 @@
-  <header>
+<header>
     <nav class="navbar navbar-expand-md navbar-dark bg-success">
       <a class="navbar-brand" href="/urls">TinyApp</a>
       <button
@@ -12,24 +12,30 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
+      
       <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
         <div class="navbar-nav">
           <a class="nav-item nav-link" href="/urls">My URLs</a>
           <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         </div>
       </div>
-      <% if (username) { %>
+  
+  
+      <% if (user) { %>
         <h4 class="navbar-text">
-          <%= username %>
+          <span class="navbar-text ml-3">Welcome, <%= user.email %></span>
         </h4>
         <form action="/logout" method="POST" class="ml-3">
           <button type="submit" class="btn btn-danger">Log Out</button>
         </form>
       <% } else { %>
-        <form action="/login" class="form-inline" method="POST">
-          <input type="text" name="username" id="" placeholder="Username" class="form-control me-2">
-          <button type="submit" class="btn btn-warning">Login</button>
-        </form>
-      <% } %>
-    </nav>
+       
+           <div class="navbar-nav"></div>
+            <button type="button" class="btn btn-light mr-3 btn-sm btn-link"><a  href="/urls_register">Register</a></button>
+            <button type="button" class="btn btn-light btn-sm"><a href="/urls_login">Login</a></button>
+         </div>
+  
+        <% } %>
+  
+        </nav>
   </header>
