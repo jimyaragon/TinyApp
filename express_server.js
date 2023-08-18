@@ -75,11 +75,11 @@ app.get("/urls.json", (req, res) => {
 });
 
 
-app.get("/register", (req, res) => {
+app.get("/url_register", (req, res) => {
   const templateVars = {
-    user: null, 
+    user: null, // or set to a default value
   };
-  res.render("register", templateVars);
+  res.render("url_register", templateVars);
 });
 
 app.post("/register", (req, res) => {
@@ -113,7 +113,7 @@ app.post("/urls", (req, res) => {
   const id = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[id] = longURL;
-  res.redirect(`/urls/${id}`); 
+  res.redirect(`/urls/${id}`); // Redirect to the newly created URL
 });
 
 app.post("/urls/:id/delete", (req, res) => {
@@ -141,9 +141,14 @@ app.post("/urls/:id", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
+
+  // Check if the user exists and the password matches
   const user = getUserByEmail(email);
   if (user && user.password === password) {
+    // Set the user_id as a cookie
     res.cookie("user_id", user.id);
+
+    // Redirect back to the /urls page
     res.redirect("/urls");
   } else {
     res.status(400).send("Invalid email or password");
@@ -151,7 +156,10 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
+  // Clear the user_id cookie
   res.clearCookie("user_id");
+
+  // Redirect back to the /urls page
   res.redirect("/urls");
 });
 
@@ -164,6 +172,7 @@ function getUserByEmail(email) {
   return null;
 }
 
+
 function generateRandomString() {
   const length = 6;
   const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -174,6 +183,7 @@ function generateRandomString() {
   }
   return randomString;
 }
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
