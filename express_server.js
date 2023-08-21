@@ -73,21 +73,20 @@ app.get("/urls/:id", (req, res) => {
 
   if (!user) {
     const errorMessage = "You must be logged in to access this page.";
-    return res.status(401).render("urls_error", { errorMessage });
+    return res.render("urls_show", { error: errorMessage });
   }
 
   if (!url) {
     const errorMessage = "Short URL not found.";
-    return res.status(404).render("urls_error", { errorMessage });
+    return res.render("urls_show", { error: errorMessage });
   }
 
   if (url.userID !== user.id) {
     const errorMessage = "You do not own this URL.";
-    return res.status(403).render("urls_error", { errorMessage });
+    return res.render("urls_show", { error: errorMessage });
   }
 
-  const templateVars = { url, id: req.params.id };
-  console.log(templateVars)
+  const templateVars = { url: url, id: req.params.id };
   res.render("urls_show", templateVars);
 });
 
