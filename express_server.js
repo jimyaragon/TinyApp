@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookieSession = require("cookie-session");
+const helpers = require("./helpers"); // Require the helpers.js module
 
 app.set("view engine", "ejs");
 
@@ -153,7 +154,7 @@ app.post("/register", (req, res) => {
     return;
   }
 
-  if (getUserByEmail(email)) {
+  if (helpers.getUserByEmail(email, users)) { // Use the function from helpers.js
     res.status(400).send("Email is already registered.");
     return;
   }
@@ -239,7 +240,7 @@ app.post("/urls/:id", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  const user = getUserByEmail(email);
+  const user = helpers.getUserByEmail(email, users);
   if (!user || !bcrypt.compareSync(password, user.password)) {
     res.status(403).send("Invalid email or password.");
   } else {
