@@ -6,8 +6,14 @@ const cookieParser = require("cookie-parser");
 app.set("view engine", "ejs");
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {
+    id: "b2xVn2",
+    longURL: "http://www.lighthouselabs.ca"
+  },
+  "9sm5xK": {
+    id: "9sm5xK",
+    longURL: "http://www.google.com"
+  }
 };
 
 const users = {
@@ -33,40 +39,79 @@ app.use((req, res, next) => {
 
 app.get("/urls/new", (req, res) => {
   const user = users[req.cookies.user_id];
-  const templateVars = {
-    user: user
-  };
-  res.render("urls_new", templateVars);
+  if (user) {
+    const templateVars = {
+      user: user
+    };
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/urls_login");
+  }
 });
 
 app.get("/urls", (req, res) => {
   const user = users[req.cookies.user_id];
+  const userURLs = getUserURLs(req.cookies.user_id);
+  
   const templateVars = {
     user: user,
-    urls: urlDatabase 
+    urls: userURLs
   };
   res.render("urls_index", templateVars);
 });
 
+
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const user = res.locals.user;
+  const url = urlDatabase[req.params.id];
+
+  if (!user) {
+    const errorMessage = "You must be logged in to access this page.";
+    return res.status(401).render("urls_error", { errorMessage });
+  }
+
+  if (!url) {
+    const errorMessage = "Short URL not found.";
+    return res.status(404).render("urls_error", { errorMessage });
+  }
+
+  if (url.userID !== user.id) {
+    const errorMessage = "You do not own this URL.";
+    return res.status(403).render("urls_error", { errorMessage });
+  }
+
+  const templateVars = { url, id: req.params.id };
+  console.log(templateVars)
   res.render("urls_show", templateVars);
 });
 
+
+
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
-  if (longURL) {
-    res.redirect(longURL);
+  const shortURL = req.params.id;
+  const longUrlObject = urlDatabase[shortURL];
+
+  if (longUrlObject && longUrlObject.longURL) {
+    res.redirect(longUrlObject.longURL);
   } else {
-    res.status(404).send("Short URL not found");
+    const errorMessage = "Short URL not found";
+    const templateVars = {
+      user: res.locals.user,
+      errorMessage: errorMessage
+    };
+    res.status(404).render("urls_login", templateVars);
   }
 });
 
 app.get("/urls_login", (req, res) => {
-  const templateVars = {
-    user: null // or set to a default value
-  };
-  res.render("urls_login", templateVars);
+  if (res.locals.user) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      user: null // or set to a default value
+    };
+    res.render("urls_login", templateVars);
+  }
 });
 
 app.get("/", (req, res) => {
@@ -83,23 +128,28 @@ app.get("/urls.json", (req, res) => {
 
 
 app.get("/urls_register", (req, res) => {
-  const templateVars = {
-    user: null // or set to a default value
-  };
-  res.render("urls_register", templateVars);
+  if (res.locals.user) {
+    res.redirect("/urls");
+  } else {
+    const templateVars = {
+      user: null // or set to a default value
+    };
+    res.render("urls_register", templateVars);
+  }
 });
+
 
 app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
   if (!email || !password) {
-    res.status(400).send("Please add Email and password");
+    res.status(400).send("Email and password are required. Try again!");
     return;
   }
 
   if (getUserByEmail(email)) {
-    res.status(400).send("This email address is already in the system");
+    res.status(400).send("Email is already registered.");
     return;
   }
 
@@ -116,35 +166,68 @@ app.post("/register", (req, res) => {
 
 
 app.post("/urls", (req, res) => {
-  const id = generateRandomString();
-  const longURL = req.body.longURL;
-  urlDatabase[id] = longURL;
-  res.redirect(`/urls/${id}`); // Redirect to the newly created URL
+  const user = users[req.cookies.user_id];
+  if (user) {
+    const shortURL = generateRandomString();
+    const longURL = req.body.longURL;
+    urlDatabase[shortURL] = {
+      longURL: longURL,
+      userID: user.id
+    };
+    res.redirect(`/urls/${shortURL}`);
+  } else {
+    res.status(403).send("You must be logged in to shorten URLs.");
+  }
 });
 
 app.post("/urls/:id/delete", (req, res) => {
   const idToDelete = req.params.id;
+  const user = res.locals.user;
+
+  if (!user) {
+    const errorMessage = "You must be logged in to perform this action.";
+    return res.status(401).render("urls_error", { errorMessage });
+  }
 
   if (urlDatabase[idToDelete]) {
-    delete urlDatabase[idToDelete];
-    res.redirect("/urls");
+    if (urlDatabase[idToDelete].userID === user.id) {
+      delete urlDatabase[idToDelete];
+      res.redirect("/urls");
+    } else {
+      const errorMessage = "You do not own this URL.";
+      res.status(403).render("urls_error", { errorMessage });
+    }
   } else {
-    res.status(404).send("Short URL not found");
+    const errorMessage = "Short URL not found";
+    res.status(404).render("urls_error", { errorMessage });
   }
 });
+
 
 app.post("/urls/:id", (req, res) => {
   const idToUpdate = req.params.id;
+  const user = res.locals.user;
+
+  if (!user) {
+    const errorMessage = "You must be logged in to perform this action.";
+    return res.status(401).render("error", { errorMessage });
+  }
+
   const newLongURL = req.body.longURL;
 
   if (urlDatabase[idToUpdate]) {
-    urlDatabase[idToUpdate] = newLongURL;
-    res.redirect("/urls");
+    if (urlDatabase[idToUpdate].userID === user.id) {
+      urlDatabase[idToUpdate].longURL = newLongURL;
+      res.redirect("/urls");
+    } else {
+      const errorMessage = "You do not own this URL.";
+      res.status(403).render("error", { errorMessage });
+    }
   } else {
-    res.status(404).send("Short URL not found");
+    const errorMessage = "Short URL not found";
+    res.status(404).render("error", { errorMessage });
   }
 });
-
 
 
 app.post("/login", (req, res) => {
@@ -152,14 +235,18 @@ app.post("/login", (req, res) => {
 
   // Check if the user exists and the password matches
   const user = getUserByEmail(email);
-  if (user && user.password === password) {
+  if (!user) {
+    // User not found
+    res.status(403).send("User not found");
+  } else if (user.password !== password) {
+    // Password mismatch
+    res.status(403).send("Invalid password");
+  } else {
     // Set the user_id as a cookie
     res.cookie("user_id", user.id);
 
     // Redirect back to the /urls page
     res.redirect("/urls");
-  } else {
-    res.status(400).send("Please review. Your email or password is incorrect");
   }
 });
 
@@ -167,8 +254,8 @@ app.post("/logout", (req, res) => {
   // Clear the user_id cookie
   res.clearCookie("user_id");
 
-  // Redirect back to the /urls page
-  res.redirect("/urls");
+  // Redirect to the login page
+  res.redirect("/urls_login");
 });
 
 function getUserByEmail(email) {
@@ -191,6 +278,30 @@ function generateRandomString() {
   }
   return randomString;
 }
+
+//retrieve URLs belonging to a specific user//
+
+function getUserURLs(userID) {
+  const userURLs = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === userID) {
+      userURLs[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userURLs;
+}
+
+//Function to retrieve URLs where userID is equal to id//
+function getURLsForUser(id) {
+  const userURLs = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      userURLs[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userURLs;
+}
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
