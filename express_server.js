@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 
 app.set("view engine", "ejs");
 
@@ -31,15 +31,19 @@ const users = {
 };
 
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: "session",
+  keys: ["your-secret-key"], // Add a secret key or array of keys for encryption
+  maxAge: 24 * 60 * 60 * 1000 // Set the session to expire after 24 hours
+}));
 
 app.use((req, res, next) => {
-  res.locals.user = users[req.cookies.user_id];
+  res.locals.user = users[req.session.user_id];
   next();
 });
 
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   if (user) {
     const templateVars = {
       user: user
@@ -51,8 +55,8 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const user = users[req.cookies.user_id];
-  const userURLs = getUserURLs(req.cookies.user_id);
+  const user = users[req.session.user_id];
+  const userURLs = getUserURLs(req.session.user_id);
   
   const templateVars = {
     user: user,
@@ -162,13 +166,13 @@ app.post("/register", (req, res) => {
     password: hashedPassword, // Save the hashed password
   };
 
-  res.cookie("user_id", userId);
+  req.session.user_id = userId; // Set the user_id in session
   res.redirect("/urls");
 });
 
 
 app.post("/urls", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   if (user) {
     const shortURL = generateRandomString();
     const longURL = req.body.longURL;
@@ -237,10 +241,9 @@ app.post("/login", (req, res) => {
 
   const user = getUserByEmail(email);
   if (!user || !bcrypt.compareSync(password, user.password)) {
-    // Compare hashed password
     res.status(403).send("Invalid email or password.");
   } else {
-    res.cookie("user_id", user.id);
+    req.session.user_id = user.id; // Set the user_id in session
     res.redirect("/urls");
   }
 });
